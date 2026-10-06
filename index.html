@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clôture de la caisse n° 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap">
+<style>
+/* Layout : bandeau ; consigne + élève ; barre des 4 étapes ; une carte par étape ; sauvegarde */
+:root {
+  --bg: #f4f2f1;
+  --surface: #ffffff;
+  --ink: #1b1a1a;
+  --muted: #615b59;
+  --line: #d9d3d1;
+  --red: #e30613;
+  --red-soft: #fde6e7;
+  --black: #111111;
+  --ok: #1d7a3a;
+  --ok-soft: #e3f3e8;
+  --belt: #3b3836;
+  --field: #faf8f7;
+  --screen: #0f2a3a;
+  --screen-ink: #bfe6ff;
+  --paper: #fffef8;
+  --display: "Archivo Black", "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Courier New", Courier, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161414; --surface: #211e1e; --ink: #f3efee; --muted: #b3aba8; --line: #3a3534;
+    --red: #ff3b45; --red-soft: #3a1416; --black: #000000; --ok: #4cc472; --ok-soft: #142b1c; --field: #2a2626;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161414; --surface: #211e1e; --ink: #f3efee; --muted: #b3aba8; --line: #3a3534;
+  --red: #ff3b45; --red-soft: #3a1416; --black: #000000; --ok: #4cc472; --ok-soft: #142b1c; --field: #2a2626;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; margin: 0; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 0 40px; }
+header.brand { background: var(--black); color: #fff; }
+header.brand .wrap { padding-block: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
+.logo { background: #e30613; color: #fff; font-family: var(--display); font-size: 20px; padding: 6px 12px; letter-spacing: .02em; }
+header.brand h1 { font-family: var(--display); font-weight: 400; font-size: clamp(20px, 3.2vw, 30px); margin: 0; text-wrap: balance; }
+header.brand h1 span { color: #ff3b45; }
+header.brand p { margin: 0; flex-basis: 100%; color: #d6d0ce; font-size: 14px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; min-width: 0; }
+.top { margin-top: 20px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+.top h2 { font-family: var(--display); font-weight: 400; font-size: 17px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .03em; }
+.top h2 .tag { color: var(--red); }
+.top p { margin: 0 0 6px; }
+.muted { color: var(--muted); font-size: 14px; }
+label.lb { display: block; font-weight: 600; margin-bottom: 6px; }
+input[type=text], textarea { width: 100%; font: inherit; padding: 9px 10px; border: 2px solid var(--line); background: var(--field); color: var(--ink); }
+textarea { min-height: 90px; resize: vertical; }
+input:focus-visible, textarea:focus-visible { outline: 3px solid var(--red); outline-offset: 1px; }
+
+/* barre de progression */
+.progress { margin-top: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pg { background: var(--surface); border: 2px solid var(--line); padding: 8px 10px; display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; color: var(--muted); min-width: 0; }
+.pg .n { flex: none; width: 26px; height: 26px; display: grid; place-items: center; background: var(--line); color: var(--ink); font-weight: 800; }
+.pg.cur { border-color: var(--red); color: var(--ink); }
+.pg.cur .n { background: #e30613; color: #fff; }
+.pg.done { border-color: var(--ok); color: var(--ink); }
+.pg.done .n { background: var(--ok); color: #fff; }
+
+/* étapes */
+.stepc { margin-top: 14px; border-left: 6px solid var(--line); }
+.stepc.cur { border-left-color: #e30613; }
+.stepc.done { border-left-color: var(--ok); }
+.stepc.locked { opacity: .5; }
+.stepc h3 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+.stepc h3 .n { display: inline-grid; place-items: center; width: 30px; height: 30px; background: var(--black); color: #fff; font-family: var(--display); font-size: 15px; flex: none; }
+.stepc.cur h3 .n { background: #e30613; }
+.stepc.done h3 .n { background: var(--ok); }
+.stepc .goal { margin: 6px 0 0 40px; color: var(--muted); font-size: 14px; }
+.stepc .body { margin-top: 14px; }
+.stepc.locked .body, .stepc.done .body.fold { display: none; }
+.summary { margin: 8px 0 0 40px; font-size: 14px; color: var(--ok); font-weight: 600; }
+.next { margin-top: 14px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { appearance: none; font: inherit; font-weight: 700; padding: 10px 16px; border: 2px solid var(--black); cursor: pointer; }
+.btn.primary { background: #e30613; border-color: #e30613; color: #fff; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.msgline { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+.msgline.warn { color: var(--red); font-weight: 700; }
+.linkbox { margin-top: 12px; border: 2px solid var(--red); background: var(--red-soft); padding: 12px 14px; }
+.linkbox p { margin: 0 0 8px; font-size: 14px; }
+.linkbox .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.linkbox input { flex: 1 1 200px; min-width: 0; font-size: 13px; }
+.linkbox .small { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+
+.drawer { background: #2d2b2a; padding: 12px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.drawer .coins { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.comp { appearance: none; font: inherit; background: #4a4644; color: #fff; border: 2px solid transparent; padding: 8px 6px; min-height: 104px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.comp:hover, .comp:focus-visible { border-color: #ff3b45; outline: none; }
+.comp[disabled] { cursor: default; opacity: .55; }
+.comp .lab { background: #111; font-weight: 800; padding: 2px 8px; font-size: 14px; }
+.comp .heap { position: relative; width: 78px; height: 48px; }
+.comp .heap svg { position: absolute; left: 0; top: 0; }
+.comp .vide { font-size: 12px; color: #c9c3c1; margin-top: 10px; }
+.comp .hint { font-size: 11px; color: #d6d0ce; }
+.all { appearance: none; font: inherit; font-size: 12px; font-weight: 700; background: transparent; color: #fff; border: 1px solid #8a8381; padding: 3px 8px; cursor: pointer; margin-top: auto; }
+.all:hover { border-color: #ff3b45; }
+.bill { display: inline-block; width: 76px; height: 41px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.coin { display: inline-block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+.coin.c2 { width: 31px; height: 31px; } .coin.c1 { width: 28px; height: 28px; } .coin.c50 { width: 29px; height: 29px; }
+.comp .heap .bill { width: 64px; height: 34px; }
+
+.count-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr); gap: 16px; align-items: start; }
+.counter { background: #e9e4e1; padding: 10px; }
+.counter .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #615b59; margin-bottom: 6px; font-weight: 700; }
+.crow { display: grid; grid-template-columns: 70px minmax(0, 1fr) 110px; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid #d3ccc9; }
+.crow:first-of-type { border-top: 0; }
+.crow .v { font-weight: 800; color: #1b1a1a; }
+.crow .pile { display: flex; flex-wrap: wrap; gap: 4px 12px; min-height: 30px; }
+.grp { display: inline-flex; flex-wrap: nowrap; gap: 3px; }
+.grp .bill { width: 66px; height: 36px; }
+.grp .bill + .bill { margin-left: -46px; }
+.crow .nb { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #615b59; }
+.crow input { padding: 6px 8px; text-align: center; }
+.empty-c { font-size: 12px; color: #8a8381; }
+
+table.fiche { width: 100%; border-collapse: collapse; margin-top: 4px; }
+table.fiche th, table.fiche td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+table.fiche th { background: var(--black); color: #fff; font-size: 13px; }
+table.fiche td.c { text-align: center; }
+table.fiche input { padding: 6px 8px; text-align: right; }
+table.fiche tr.tot td { font-weight: 800; background: var(--red-soft); }
+.zticket { background: var(--paper); color: #111; font-family: var(--mono); font-size: 14px; padding: 14px 16px; border: 1px dashed #999; max-width: 380px; }
+.zticket .c { text-align: center; }
+.zticket .r { display: flex; justify-content: space-between; gap: 8px; }
+.zticket hr { border: 0; border-top: 1px dashed #999; margin: 8px 0; }
+.calc { display: grid; gap: 10px; margin-top: 14px; max-width: 560px; }
+.calc label { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: center; font-weight: 700; }
+.calc label small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+.calc input { text-align: right; }
+.opts3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 12px; }
+.opt { appearance: none; font: inherit; font-weight: 700; background: var(--surface); color: var(--ink); border: 2px solid var(--line); padding: 10px 12px; cursor: pointer; text-align: left; }
+.opt:hover { border-color: var(--red); }
+.opt[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); }
+.q { margin-top: 12px; } .q > label { display: block; font-weight: 700; margin-bottom: 6px; }
+@media (max-width: 900px) { .top, .count-grid { grid-template-columns: 1fr; } .progress { grid-template-columns: repeat(4, minmax(0, 1fr)); } .pg .t { display: none; } }
+@media (max-width: 520px) { .drawer { grid-template-columns: repeat(2, minmax(0, 1fr)); } .crow { grid-template-columns: 56px minmax(0, 1fr) 84px; } .calc label { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<linearGradient id="holo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8e8e8"/><stop offset=".25" stop-color="#c9f0ff"/><stop offset=".5" stop-color="#f4d8ff"/><stop offset=".75" stop-color="#d9ffd6"/><stop offset="1" stop-color="#e0e0e0"/></linearGradient>
+<radialGradient id="silver" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#cfd0d2"/><stop offset="1" stop-color="#9ea0a4"/></radialGradient>
+<radialGradient id="gold" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff1b0"/><stop offset=".6" stop-color="#e2bb48"/><stop offset="1" stop-color="#b48a1e"/></radialGradient>
+<radialGradient id="ngold" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffe9a0"/><stop offset=".6" stop-color="#d9ad3f"/><stop offset="1" stop-color="#a87d1c"/></radialGradient>
+<linearGradient id="g50" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7c983"/><stop offset=".55" stop-color="#e9963c"/><stop offset="1" stop-color="#f7c983"/></linearGradient>
+<symbol id="bill50" viewBox="0 0 120 64"><rect x=".5" y=".5" width="119" height="63" rx="3" fill="url(#g50)" stroke="#7a4310" stroke-width="1"/>
+<ellipse cx="17" cy="34" rx="11" ry="17" fill="#fff" opacity=".38"/>
+<path d="M38 58 V32 a15 15 0 0 1 30 0 V58" fill="#7a4310" fill-opacity=".16" stroke="#7a4310" stroke-width="1.6"/>
+<path d="M44 58 V33 a9 9 0 0 1 18 0 V58" fill="none" stroke="#7a4310" stroke-width=".9" opacity=".7"/>
+<path d="M30 58 H76" stroke="#7a4310" stroke-width="1.2" opacity=".6"/>
+<rect x="82" y="0" width="6" height="64" fill="url(#holo)" opacity=".9"/>
+<rect x="92" y="6" width="18" height="12" fill="#1f3f99"/><circle cx="104.60" cy="12.00" r=".55" fill="#ffd400"/><circle cx="104.12" cy="13.80" r=".55" fill="#ffd400"/><circle cx="102.80" cy="15.12" r=".55" fill="#ffd400"/><circle cx="101.00" cy="15.60" r=".55" fill="#ffd400"/><circle cx="99.20" cy="15.12" r=".55" fill="#ffd400"/><circle cx="97.88" cy="13.80" r=".55" fill="#ffd400"/><circle cx="97.40" cy="12.00" r=".55" fill="#ffd400"/><circle cx="97.88" cy="10.20" r=".55" fill="#ffd400"/><circle cx="99.20" cy="8.88" r=".55" fill="#ffd400"/><circle cx="101.00" cy="8.40" r=".55" fill="#ffd400"/><circle cx="102.80" cy="8.88" r=".55" fill="#ffd400"/><circle cx="104.12" cy="10.20" r=".55" fill="#ffd400"/>
+<text x="5" y="16" font-family="Arial, sans-serif" font-weight="900" font-size="15" fill="#7a4310">50</text>
+<text x="114" y="58" text-anchor="end" font-family="Arial, sans-serif" font-weight="900" font-size="22" fill="#7a4310">50</text>
+<text x="53" y="13" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="7" letter-spacing="1" fill="#7a4310">EURO</text>
+</symbol><linearGradient id="g20" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9d2f1"/><stop offset=".55" stop-color="#6f9cd6"/><stop offset="1" stop-color="#b9d2f1"/></linearGradient>
+<symbol id="bill20" viewBox="0 0 120 64"><rect x=".5" y=".5" width="119" height="63" rx="3" fill="url(#g20)" stroke="#1f3f74" stroke-width="1"/>
+<ellipse cx="17" cy="34" rx="11" ry="17" fill="#fff" opacity=".38"/>
+<path d="M38 58 V32 a15 15 0 0 1 30 0 V58" fill="#1f3f74" fill-opacity=".16" stroke="#1f3f74" stroke-width="1.6"/>
+<path d="M44 58 V33 a9 9 0 0 1 18 0 V58" fill="none" stroke="#1f3f74" stroke-width=".9" opacity=".7"/>
+<path d="M30 58 H76" stroke="#1f3f74" stroke-width="1.2" opacity=".6"/>
+<rect x="82" y="0" width="6" height="64" fill="url(#holo)" opacity=".9"/>
+<rect x="92" y="6" width="18" height="12" fill="#1f3f99"/><circle cx="104.60" cy="12.00" r=".55" fill="#ffd400"/><circle cx="104.12" cy="13.80" r=".55" fill="#ffd400"/><circle cx="102.80" cy="15.12" r=".55" fill="#ffd400"/><circle cx="101.00" cy="15.60" r=".55" fill="#ffd400"/><circle cx="99.20" cy="15.12" r=".55" fill="#ffd400"/><circle cx="97.88" cy="13.80" r=".55" fill="#ffd400"/><circle cx="97.40" cy="12.00" r=".55" fill="#ffd400"/><circle cx="97.88" cy="10.20" r=".55" fill="#ffd400"/><circle cx="99.20" cy="8.88" r=".55" fill="#ffd400"/><circle cx="101.00" cy="8.40" r=".55" fill="#ffd400"/><circle cx="102.80" cy="8.88" r=".55" fill="#ffd400"/><circle cx="104.12" cy="10.20" r=".55" fill="#ffd400"/>
+<text x="5" y="16" font-family="Arial, sans-serif" font-weight="900" font-size="15" fill="#1f3f74">20</text>
+<text x="114" y="58" text-anchor="end" font-family="Arial, sans-serif" font-weight="900" font-size="22" fill="#1f3f74">20</text>
+<text x="53" y="13" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="7" letter-spacing="1" fill="#1f3f74">EURO</text>
+</symbol><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3b3a6"/><stop offset=".55" stop-color="#dc6f5f"/><stop offset="1" stop-color="#f3b3a6"/></linearGradient>
+<symbol id="bill10" viewBox="0 0 120 64"><rect x=".5" y=".5" width="119" height="63" rx="3" fill="url(#g10)" stroke="#7a2216" stroke-width="1"/>
+<ellipse cx="17" cy="34" rx="11" ry="17" fill="#fff" opacity=".38"/>
+<path d="M38 58 V32 a15 15 0 0 1 30 0 V58" fill="#7a2216" fill-opacity=".16" stroke="#7a2216" stroke-width="1.6"/>
+<path d="M44 58 V33 a9 9 0 0 1 18 0 V58" fill="none" stroke="#7a2216" stroke-width=".9" opacity=".7"/>
+<path d="M30 58 H76" stroke="#7a2216" stroke-width="1.2" opacity=".6"/>
+<rect x="82" y="0" width="6" height="64" fill="url(#holo)" opacity=".9"/>
+<rect x="92" y="6" width="18" height="12" fill="#1f3f99"/><circle cx="104.60" cy="12.00" r=".55" fill="#ffd400"/><circle cx="104.12" cy="13.80" r=".55" fill="#ffd400"/><circle cx="102.80" cy="15.12" r=".55" fill="#ffd400"/><circle cx="101.00" cy="15.60" r=".55" fill="#ffd400"/><circle cx="99.20" cy="15.12" r=".55" fill="#ffd400"/><circle cx="97.88" cy="13.80" r=".55" fill="#ffd400"/><circle cx="97.40" cy="12.00" r=".55" fill="#ffd400"/><circle cx="97.88" cy="10.20" r=".55" fill="#ffd400"/><circle cx="99.20" cy="8.88" r=".55" fill="#ffd400"/><circle cx="101.00" cy="8.40" r=".55" fill="#ffd400"/><circle cx="102.80" cy="8.88" r=".55" fill="#ffd400"/><circle cx="104.12" cy="10.20" r=".55" fill="#ffd400"/>
+<text x="5" y="16" font-family="Arial, sans-serif" font-weight="900" font-size="15" fill="#7a2216">10</text>
+<text x="114" y="58" text-anchor="end" font-family="Arial, sans-serif" font-weight="900" font-size="22" fill="#7a2216">10</text>
+<text x="53" y="13" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="7" letter-spacing="1" fill="#7a2216">EURO</text>
+</symbol><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6d8d0"/><stop offset=".55" stop-color="#a9aca0"/><stop offset="1" stop-color="#d6d8d0"/></linearGradient>
+<symbol id="bill5" viewBox="0 0 120 64"><rect x=".5" y=".5" width="119" height="63" rx="3" fill="url(#g5)" stroke="#4c5046" stroke-width="1"/>
+<ellipse cx="17" cy="34" rx="11" ry="17" fill="#fff" opacity=".38"/>
+<path d="M38 58 V32 a15 15 0 0 1 30 0 V58" fill="#4c5046" fill-opacity=".16" stroke="#4c5046" stroke-width="1.6"/>
+<path d="M44 58 V33 a9 9 0 0 1 18 0 V58" fill="none" stroke="#4c5046" stroke-width=".9" opacity=".7"/>
+<path d="M30 58 H76" stroke="#4c5046" stroke-width="1.2" opacity=".6"/>
+<rect x="82" y="0" width="6" height="64" fill="url(#holo)" opacity=".9"/>
+<rect x="92" y="6" width="18" height="12" fill="#1f3f99"/><circle cx="104.60" cy="12.00" r=".55" fill="#ffd400"/><circle cx="104.12" cy="13.80" r=".55" fill="#ffd400"/><circle cx="102.80" cy="15.12" r=".55" fill="#ffd400"/><circle cx="101.00" cy="15.60" r=".55" fill="#ffd400"/><circle cx="99.20" cy="15.12" r=".55" fill="#ffd400"/><circle cx="97.88" cy="13.80" r=".55" fill="#ffd400"/><circle cx="97.40" cy="12.00" r=".55" fill="#ffd400"/><circle cx="97.88" cy="10.20" r=".55" fill="#ffd400"/><circle cx="99.20" cy="8.88" r=".55" fill="#ffd400"/><circle cx="101.00" cy="8.40" r=".55" fill="#ffd400"/><circle cx="102.80" cy="8.88" r=".55" fill="#ffd400"/><circle cx="104.12" cy="10.20" r=".55" fill="#ffd400"/>
+<text x="5" y="16" font-family="Arial, sans-serif" font-weight="900" font-size="15" fill="#4c5046">5</text>
+<text x="114" y="58" text-anchor="end" font-family="Arial, sans-serif" font-weight="900" font-size="22" fill="#4c5046">5</text>
+<text x="53" y="13" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="7" letter-spacing="1" fill="#4c5046">EURO</text>
+</symbol><symbol id="coin2" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19.3" fill="url(#silver)" stroke="#6f6a5c" stroke-width=".8"/>
+<circle cx="20" cy="20" r="18.4" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="1.2" stroke-dasharray=".7 .7"/><circle cx="36.20" cy="20.00" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="34.03" cy="28.10" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="28.10" cy="34.03" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20.00" cy="36.20" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="11.90" cy="34.03" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="5.97" cy="28.10" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="3.80" cy="20.00" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="5.97" cy="11.90" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="11.90" cy="5.97" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20.00" cy="3.80" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="28.10" cy="5.97" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="34.03" cy="11.90" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20" cy="20" r="12" fill="url(#gold)" stroke="#8a7a50" stroke-width=".6"/>
+<text x="20" y="23.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="13" fill="#4a3d10">2</text>
+<text x="20" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="4" fill="#4a3d10">EURO</text></symbol><symbol id="coin1" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19.3" fill="url(#gold)" stroke="#6f6a5c" stroke-width=".8"/>
+<circle cx="20" cy="20" r="18.4" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="1.2" stroke-dasharray=".7 .7"/><circle cx="36.20" cy="20.00" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="34.03" cy="28.10" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="28.10" cy="34.03" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20.00" cy="36.20" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="11.90" cy="34.03" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="5.97" cy="28.10" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="3.80" cy="20.00" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="5.97" cy="11.90" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="11.90" cy="5.97" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20.00" cy="3.80" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="28.10" cy="5.97" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="34.03" cy="11.90" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20" cy="20" r="12" fill="url(#silver)" stroke="#8a7a50" stroke-width=".6"/>
+<text x="20" y="23.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="13" fill="#4a3d10">1</text>
+<text x="20" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="4" fill="#4a3d10">EURO</text></symbol><symbol id="coin50" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19.3" fill="url(#ngold)" stroke="#6f6a5c" stroke-width=".8"/>
+<circle cx="20" cy="20" r="18.4" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="1.2" stroke-dasharray=".7 .7"/><circle cx="36.20" cy="20.00" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="34.03" cy="28.10" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="28.10" cy="34.03" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20.00" cy="36.20" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="11.90" cy="34.03" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="5.97" cy="28.10" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="3.80" cy="20.00" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="5.97" cy="11.90" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="11.90" cy="5.97" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="20.00" cy="3.80" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="28.10" cy="5.97" r=".9" fill="#7d6a2a" opacity=".8"/><circle cx="34.03" cy="11.90" r=".9" fill="#7d6a2a" opacity=".8"/>
+<text x="20" y="22.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="11" fill="#4a3d10">50</text>
+<text x="20" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="3.6" fill="#4a3d10">EURO CENT</text></symbol></defs></svg>
+<header class="brand">
+  <div class="wrap">
+    <div class="logo">DARTY</div>
+    <h1>La clôture de la <span>caisse n° 2</span></h1>
+    <p>Magasin Darty de Pont-à-Mousson · Pôle caisse et services · Mission 6 · Vendredi 27 novembre 2026 – 20 h</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="top">
+    <div class="card">
+      <h2><span class="tag">20 h</span> · Le magasin a fermé ses portes</h2>
+      <p>Il est temps de clôturer votre caisse. Suivez les <b>4 étapes</b> dans l'ordre : chaque étape s'ouvre quand la précédente est terminée.</p>
+      <p class="muted">Aidez-vous de la fiche « La procédure de clôture de caisse » de votre document Word.</p>
+    </div>
+    <div class="card">
+      <label class="lb" for="nom">Prénom et nom de l'élève</label>
+      <input id="nom" type="text" autocomplete="off" placeholder="Ex. : Léa MARTIN">
+    </div>
+  </section>
+
+  <nav class="progress" id="progress" aria-label="Étapes de la mission"></nav>
+
+  <section class="card stepc" data-step="1">
+    <h3><span class="n">1</span>Comptez les espèces du tiroir-caisse</h3>
+    <p class="goal">Cliquez sur un compartiment pour sortir les billets ou les pièces un par un et les poser sur le comptoir. Comptez-les, puis écrivez le nombre.</p>
+    <p class="summary" id="sum1" hidden></p>
+    <div class="body">
+      <div class="count-grid">
+        <div>
+          <div class="drawer" id="drawer"></div>
+        </div>
+        <div class="counter">
+          <div class="lbl">Comptoir : les espèces sorties du tiroir</div>
+          <div id="rows"></div>
+        </div>
+      </div>
+      <div class="next"><button class="btn primary" type="button" data-go="2">J'ai tout compté → étape 2</button></div>
+    </div>
+  </section>
+
+  <section class="card stepc" data-step="2">
+    <h3><span class="n">2</span>Calculez le montant des espèces</h3>
+    <p class="goal">Pour chaque ligne, calculez le montant (nombre × valeur), puis le total des espèces comptées.</p>
+    <p class="summary" id="sum2" hidden></p>
+    <div class="body">
+      <table class="fiche"><thead><tr><th>Valeur</th><th>Nombre</th><th>Montant (€)</th></tr></thead><tbody id="fiche"></tbody></table>
+      <div class="next"><button class="btn primary" type="button" data-go="3">J'ai calculé le total → étape 3</button></div>
+    </div>
+  </section>
+
+  <section class="card stepc" data-step="3">
+    <h3><span class="n">3</span>Calculez l'écart de caisse</h3>
+    <p class="goal">Lisez le ticket de fin de journée, calculez les espèces prévues, puis l'écart de caisse.</p>
+    <p class="summary" id="sum3" hidden></p>
+    <div class="body">
+      <div class="zticket">
+        <div class="c"><b>DARTY PONT-À-MOUSSON</b><br>Ticket de fin de journée<br>Caisse 2 – 27/11/2026 – 20:02</div><hr>
+        <div class="r"><span>Fond de caisse du matin</span><span>150,00 €</span></div>
+        <div class="r"><span>Ventes payées en espèces</span><span>564,00 €</span></div><hr>
+        <div class="c">Comptez les espèces du tiroir.</div>
+      </div>
+      <div class="calc">
+        <label>Espèces prévues <small>fond de caisse + ventes en espèces</small><input id="prev" type="text" inputmode="decimal" placeholder="… €"></label>
+        <label>Espèces comptées <small>votre total de l'étape 2</small><input id="cpt" type="text" inputmode="decimal" placeholder="… €"></label>
+        <label>Écart de caisse <small>espèces comptées − espèces prévues</small><input id="ec" type="text" inputmode="decimal" placeholder="… €"></label>
+      </div>
+      <div class="opts3" id="etat">
+        <button type="button" class="opt" data-v="0" aria-pressed="false">Il ne manque rien</button>
+        <button type="button" class="opt" data-v="1" aria-pressed="false">Il manque de l'argent</button>
+        <button type="button" class="opt" data-v="2" aria-pressed="false">Il y a trop d'argent</button>
+      </div>
+      <div class="next"><button class="btn primary" type="button" data-go="4">J'ai calculé l'écart → étape 4</button></div>
+    </div>
+  </section>
+
+  <section class="card stepc" data-step="4">
+    <h3><span class="n">4</span>Prévenez M. Tabilo et enregistrez votre travail</h3>
+    <p class="goal">Écrivez votre message à M. Tabilo : ce que vous avez compté, ce qui était prévu et l'écart. Puis enregistrez votre travail.</p>
+    <div class="body">
+      <div class="q"><label for="mt">Mon message à M. Tabilo</label><textarea id="mt" placeholder="Monsieur Tabilo, à la clôture de la caisse n° 2, …"></textarea></div>
+      <div class="actions" style="margin-top:16px"><button class="btn primary" id="save" type="button">Enregistrer mon travail</button></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:16px">
+    <div class="actions"><button class="btn" id="save2" type="button">Enregistrer en cours de route</button><button class="btn ghost" id="reset" type="button">Tout recommencer</button></div>
+    <p class="msgline" id="msg" aria-live="polite">Écrivez votre nom, puis commencez par l'étape 1.</p>
+    <div class="linkbox" id="linkbox" hidden>
+        <p><b>Votre lien de sauvegarde est prêt.</b> Copiez-le et collez-le dans votre document Word : il permet de retrouver votre travail sur n'importe quel ordinateur.</p>
+        <div class="row"><input id="link" type="text" readonly aria-label="Lien de sauvegarde"><button class="btn primary" id="copy" type="button">Copier le lien</button></div>
+        <p class="small">Si vous modifiez votre travail, cliquez de nouveau sur « Enregistrer mon travail » et remplacez l'ancien lien.</p>
+      </div>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var APP = "darty-cloture-caisse2", KEY = "darty-cloture-v1";
+  var D = [
+    { k: "50", v: 50, n: 4, t: "bill b50", lab: "50 €", nm: "Billets de 50 €" },
+    { k: "20", v: 20, n: 15, t: "bill b20", lab: "20 €", nm: "Billets de 20 €" },
+    { k: "10", v: 10, n: 12, t: "bill b10", lab: "10 €", nm: "Billets de 10 €" },
+    { k: "5", v: 5, n: 8, t: "bill b5", lab: "5 €", nm: "Billets de 5 €" },
+    { k: "2e", v: 2, n: 12, t: "coin c2", lab: "2 €", nm: "Pièces de 2 €" },
+    { k: "1e", v: 1, n: 15, t: "coin c1", lab: "1 €", nm: "Pièces de 1 €" },
+    { k: "50c", v: .5, n: 10, t: "coin c50", lab: "0,50 €", nm: "Pièces de 0,50 €" }
+  ];
+  var STEPS = ["Compter", "Calculer les montants", "Calculer l'écart", "Prévenir M. Tabilo"];
+  var S, nom = document.getElementById("nom"), msg = document.getElementById("msg");
+  var prev = document.getElementById("prev"), cpt = document.getElementById("cpt"), ec = document.getElementById("ec"), mt = document.getElementById("mt");
+  function blank() { var o = { step: 1, out: {}, nb: {}, mo: {}, tot: "", et: -1 }; D.forEach(function (d) { o.out[d.k] = 0; o.nb[d.k] = ""; o.mo[d.k] = ""; }); return o; }
+  S = blank();
+  function say(t, w) { msg.textContent = t; msg.classList.toggle("warn", !!w); }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var SYM = { "50": "bill50", "20": "bill20", "10": "bill10", "5": "bill5", "2e": "coin2", "1e": "coin1", "50c": "coin50" };
+  function piece(d) { return '<svg class="' + d.t + '" aria-hidden="true"><use href="#' + SYM[d.k] + '"/></svg>'; }
+
+  function drawDrawer() {
+    var h = "", coins = "";
+    D.forEach(function (d) {
+      var left = d.n - S.out[d.k], heap = "";
+      for (var i = 0; i < Math.min(left, 4); i++) heap += piece(d).replace('<svg class', '<svg style="left:' + (i * 4) + 'px;top:' + (i * 3) + 'px" class');
+      var b = '<button type="button" class="comp" data-k="' + d.k + '"' + (left ? "" : " disabled") + ' aria-label="Sortir un ' + d.nm.toLowerCase().replace("billets", "billet").replace("pièces", "pièce") + '">' +
+        '<span class="lab">' + d.lab + '</span>' + (left ? '<span class="heap">' + heap + '</span><span class="hint">Cliquez pour en sortir un</span>' : '<span class="vide">compartiment vide</span>') + '</button>';
+      if (d.t.indexOf("coin") === 0) coins += b; else h += b;
+    });
+    var dr = document.getElementById("drawer");
+    dr.innerHTML = h + '<div class="coins">' + coins + '</div>' +
+      '<div style="grid-column:1/-1;text-align:center"><button type="button" class="all" id="allout">Sortir tout le reste du tiroir</button></div>';
+    dr.querySelectorAll(".comp").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (S.step !== 1) return;
+        var d = D.filter(function (x) { return x.k === b.dataset.k; })[0];
+        if (S.out[d.k] < d.n) { S.out[d.k]++; save(); drawDrawer(); drawRows(); }
+      });
+    });
+    document.getElementById("allout").addEventListener("click", function () {
+      if (S.step !== 1) return;
+      D.forEach(function (d) { S.out[d.k] = d.n; }); save(); drawDrawer(); drawRows();
+    });
+  }
+  function drawRows() {
+    var h = "";
+    D.forEach(function (d) {
+      var p = "", g = "";
+      for (var i = 0; i < S.out[d.k]; i++) { g += piece(d); if ((i + 1) % 5 === 0) { p += '<span class="grp">' + g + '</span>'; g = ""; } }
+      if (g) p += '<span class="grp">' + g + '</span>';
+      h += '<div class="crow"><span class="v">' + d.lab + '</span><span class="pile">' + (p || '<span class="empty-c">rien pour l\'instant</span>') + '</span>' +
+        '<label class="nb">Nombre<input type="text" inputmode="numeric" data-nb="' + d.k + '" value="' + esc(S.nb[d.k]) + '"' + (S.step === 1 ? "" : " disabled") + '></label></div>';
+    });
+    var r = document.getElementById("rows"); r.innerHTML = h;
+    r.querySelectorAll("[data-nb]").forEach(function (inp) { inp.addEventListener("input", function () { S.nb[inp.dataset.nb] = inp.value; save(); }); });
+  }
+  function drawFiche() {
+    var h = "";
+    D.forEach(function (d) {
+      h += '<tr><td>' + d.nm + '</td><td class="c">' + esc(S.nb[d.k] || "") + '</td><td><input type="text" inputmode="decimal" data-mo="' + d.k + '" value="' + esc(S.mo[d.k]) + '" aria-label="Montant ' + d.nm + '"' + (S.step === 2 ? "" : " disabled") + '></td></tr>';
+    });
+    h += '<tr class="tot"><td>Total des espèces comptées</td><td></td><td><input type="text" inputmode="decimal" id="tot" value="' + esc(S.tot) + '" aria-label="Total des espèces comptées"' + (S.step === 2 ? "" : " disabled") + '></td></tr>';
+    var f = document.getElementById("fiche"); f.innerHTML = h;
+    f.querySelectorAll("[data-mo]").forEach(function (inp) { inp.addEventListener("input", function () { S.mo[inp.dataset.mo] = inp.value; save(); }); });
+    document.getElementById("tot").addEventListener("input", function (e) { S.tot = e.target.value; save(); });
+  }
+  function drawEtat() { document.querySelectorAll("#etat .opt").forEach(function (b) { b.setAttribute("aria-pressed", +b.dataset.v === S.et ? "true" : "false"); }); }
+  function sum(n, t) { var e = document.getElementById("sum" + n); e.hidden = !t; e.textContent = t; }
+  function render() {
+    var pr = document.getElementById("progress"); pr.innerHTML = "";
+    STEPS.forEach(function (t, i) {
+      var n = i + 1, d = document.createElement("div");
+      d.className = "pg" + (n < S.step ? " done" : n === S.step ? " cur" : "");
+      d.innerHTML = '<span class="n">' + n + '</span><span class="t">' + t + '</span>'; pr.appendChild(d);
+    });
+    document.querySelectorAll(".stepc").forEach(function (c) {
+      var n = +c.dataset.step;
+      c.classList.toggle("cur", n === S.step); c.classList.toggle("done", n < S.step); c.classList.toggle("locked", n > S.step);
+      c.querySelector(".body").classList.toggle("fold", n < S.step);
+      var nx = c.querySelector(".next"); if (nx) nx.hidden = n !== S.step;
+    });
+    sum(1, S.step > 1 ? "Fait : les espèces sont comptées." : "");
+    sum(2, S.step > 2 ? "Fait : total des espèces comptées : " + S.tot + " €" : "");
+    sum(3, S.step > 3 ? "Fait : écart de caisse : " + ec.value + " €" : "");
+    [prev, cpt, ec].forEach(function (x) { x.disabled = S.step !== 3; });
+    drawDrawer(); drawRows(); drawFiche(); drawEtat();
+  }
+  function canGo(to) {
+    var miss;
+    if (to === 2) {
+      if (D.some(function (d) { return S.out[d.k] < d.n; })) return "Il reste de l'argent dans le tiroir : sortez tout avant de compter.";
+      miss = D.filter(function (d) { return !String(S.nb[d.k]).trim(); })[0];
+      if (miss) return "Écrivez le nombre de " + miss.nm.toLowerCase() + ".";
+    }
+    if (to === 3) {
+      miss = D.filter(function (d) { return !String(S.mo[d.k]).trim(); })[0];
+      if (miss) return "Calculez le montant des " + miss.nm.toLowerCase() + ".";
+      if (!String(S.tot).trim()) return "Calculez le total des espèces comptées.";
+    }
+    if (to === 4) {
+      if (!prev.value.trim()) return "Calculez les espèces prévues.";
+      if (!cpt.value.trim()) return "Écrivez les espèces comptées.";
+      if (!ec.value.trim()) return "Calculez l'écart de caisse.";
+      if (S.et < 0) return "Cliquez sur : il ne manque rien, il manque de l'argent ou il y a trop d'argent.";
+    }
+    return "";
+  }
+  document.querySelectorAll("[data-go]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (!nom.value.trim()) { say("Écrivez d'abord votre prénom et votre nom.", true); nom.focus(); return; }
+      var to = +b.dataset.go, err = canGo(to);
+      if (err) { say(err, true); return; }
+      S.step = to; save(); render(); say("Étape " + to + " : " + STEPS[to - 1] + ".");
+      var c = document.querySelector('.stepc[data-step="' + to + '"]'); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  document.querySelectorAll("#etat .opt").forEach(function (b) { b.addEventListener("click", function () { if (S.step !== 3) return; S.et = +b.dataset.v; save(); drawEtat(); }); });
+  [prev, cpt, ec, mt, nom].forEach(function (x) { x.addEventListener("input", save); });
+
+  // ---------- sauvegarde
+  function state() {
+    var o = { app: APP, nom: nom.value, st: S.step, o: [], n: [], m: [], tot: S.tot, p: prev.value, c: cpt.value, e: ec.value, et: S.et, mt: mt.value };
+    D.forEach(function (d) { o.o.push(S.out[d.k]); o.n.push(S.nb[d.k]); o.m.push(S.mo[d.k]); }); return o;
+  }
+  function apply(o) {
+    S = blank(); nom.value = o.nom || ""; prev.value = o.p || ""; cpt.value = o.c || ""; ec.value = o.e || ""; mt.value = o.mt || "";
+    S.step = Math.min(4, Math.max(1, +o.st || 1)); S.tot = o.tot || ""; S.et = o.et == null ? -1 : +o.et;
+    D.forEach(function (d, i) { S.out[d.k] = Math.min(d.n, +((o.o || [])[i]) || 0); S.nb[d.k] = (o.n || [])[i] || ""; S.mo[d.k] = (o.m || [])[i] || ""; });
+    render();
+  }
+  function enc(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function dec(t) { t = t.replace(/-/g, "+").replace(/_/g, "/"); while (t.length % 4) t += "="; return JSON.parse(decodeURIComponent(escape(atob(t)))); }
+  function save() { try { history.replaceState(null, "", "#t=" + enc(state())); } catch (e) {} try { localStorage.setItem(KEY, JSON.stringify(state())); } catch (e) {} }
+  var linkbox = document.getElementById("linkbox"), linkIn = document.getElementById("link");
+  function showLink(final) {
+    if (!nom.value.trim()) { say("Écrivez d'abord votre prénom et votre nom.", true); nom.focus(); return; }
+    if (final && mt.value.trim().length < 25) { say("Écrivez votre message à M. Tabilo (au moins une phrase complète).", true); return; }
+    save(); linkIn.value = location.href.split("#")[0] + "#t=" + enc(state());
+    linkbox.hidden = false; linkIn.focus(); linkIn.select();
+    linkbox.scrollIntoView({ behavior: "smooth", block: "center" });
+    say(final ? "Travail enregistré. Copiez le lien et collez-le dans votre document Word."
+              : "Travail enregistré en cours de route. Copiez le lien pour reprendre plus tard.");
+  }
+  document.getElementById("save").addEventListener("click", function () { showLink(true); });
+  document.getElementById("save2").addEventListener("click", function () { showLink(false); });
+  document.getElementById("copy").addEventListener("click", function () {
+    var done = function () { say("Lien copié ! Collez-le dans votre document Word (Ctrl + V)."); };
+    try { navigator.clipboard.writeText(linkIn.value).then(done, function () { linkIn.select(); document.execCommand("copy"); done(); }); }
+    catch (e) { linkIn.select(); try { document.execCommand("copy"); done(); } catch (e2) { say("Sélectionnez le lien puis faites Ctrl + C pour le copier.", true); } }
+  });
+  var armed = false, resetBtn = document.getElementById("reset");
+  resetBtn.addEventListener("click", function () {
+    if (!armed) { armed = true; resetBtn.textContent = "Confirmer : tout recommencer ?"; return; }
+    armed = false; resetBtn.textContent = "Tout recommencer";
+    apply({ nom: nom.value }); save(); linkbox.hidden = true; say("Mission remise à zéro. Commencez par l'étape 1.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  var loaded = false;
+  if (location.hash.indexOf("#t=") === 0) {
+    try { var o = dec(location.hash.slice(3)); if (o.app === APP) { apply(o); loaded = true; say("Travail retrouvé grâce à votre lien de sauvegarde."); } }
+    catch (e) { say("Ce lien de sauvegarde est incomplet. Vérifiez que vous avez bien copié tout le lien.", true); }
+  }
+  if (!loaded) { try { var sv = JSON.parse(localStorage.getItem(KEY) || "null"); if (sv && sv.app === APP) { apply(sv); loaded = true; } } catch (e) {} }
+  if (!loaded) render();
+})();
+</script>
+
+</body>
+</html>
